@@ -1,7 +1,5 @@
-# Tauri + Vue + TypeScript
+WantFastDns
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+DNS 测速工具 (Tauri + Rust + Vue)
 
-## Recommended IDE Setup
-
-- [VS Code](https://code.visualstudio.com/) + [Vue - Official](https://marketplace.visualstudio.com/items?itemName=Vue.volar) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+一个跨平台的桌面应用，用于测试不同 DNS 服务器对指定域名的响应速度，帮助用户选择最快的 DNS 服务。
