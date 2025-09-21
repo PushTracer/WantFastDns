@@ -2,19 +2,14 @@ mod core;
 use core::test_dns_speed;
 
 #[tauri::command]
-async fn dns_speed_test() -> Vec<core::dns::DnsResult> {
-    let dns_servers = vec!["8.8.8.8:53", "1.1.1.1:53", "114.114.114.114:53"];
-    let domain = "www.google.com";
-
+async fn dns_speed_test(dns_servers: Vec<String>, domain: String) -> Vec<core::dns::DnsResult> {
     let mut handles = vec![];
-
     for dns in dns_servers {
-        let dns = dns.to_string();
-        let domain = domain.to_string();
-        // spawn 异步任务
-        handles.push(tokio::spawn(
-            async move { test_dns_speed(&dns, &domain).await },
-        ));
+        let dns_clone = dns.clone();
+        let domain_clone = domain.clone();
+        handles.push(tokio::spawn(async move {
+            test_dns_speed(&dns_clone, &domain_clone).await
+        }));
     }
 
     let mut results = vec![];
@@ -23,10 +18,8 @@ async fn dns_speed_test() -> Vec<core::dns::DnsResult> {
             results.push(res);
         }
     }
-
     results
 }
-
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
