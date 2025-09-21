@@ -10,14 +10,13 @@ pub struct DnsResult {
 }
 
 pub async fn test_dns_speed(dns_addr: &str, domain: &str) -> DnsResult {
-    // UDP socket
     let socket = match UdpSocket::bind("0.0.0.0:0").await {
         Ok(s) => s,
         Err(_) => {
             return DnsResult {
                 dns: dns_addr.to_string(),
                 time_ms: None,
-            }
+            };
         }
     };
 
@@ -27,33 +26,54 @@ pub async fn test_dns_speed(dns_addr: &str, domain: &str) -> DnsResult {
             return DnsResult {
                 dns: dns_addr.to_string(),
                 time_ms: None,
-            }
+            };
         }
     };
 
-    // 构建简单 A 记录 DNS 查询报文
     let query = build_dns_query(domain, 0x1234);
     let start = Instant::now();
 
-    match timeout(Duration::from_secs(2), socket.send_to(&query, addr)).await {
-        Ok(Ok(_)) => { /* 发送成功 */ }
-        _ => {
-            return DnsResult {
-                dns: dns_addr.to_string(),
-                time_ms: None,
-            }
-        }
+    if timeout(Duration::from_secs(2), socket.send_to(&query, addr))
+        .await
+        .ok()
+        .and_then(|r| r.ok())
+        .is_none()
+    {
+        return DnsResult {
+            dns: dns_addr.to_string(),
+            time_ms: None,
+        };
     }
 
     let mut buf = vec![0u8; 512];
-    let result = timeout(Duration::from_secs(2), socket.recv_from(&mut buf)).await;
+    let recv_result = timeout(Duration::from_secs(2), socket.recv_from(&mut buf)).await;
 
     let duration = start.elapsed().as_millis();
-    match result {
-        Ok(Ok((_len, _))) => DnsResult {
-            dns: dns_addr.to_string(),
-            time_ms: Some(duration),
-        },
+
+    match recv_result {
+        Ok(Ok((len, _))) => {
+            // 判断 DNS 响应是否成功（RCODE = 0）
+            if len < 12 {
+                return DnsResult {
+                    dns: dns_addr.to_string(),
+                    time_ms: None,
+                };
+            }
+            let rcode = buf[3] & 0x0F;
+            let answer_count = ((buf[6] as u16) << 8) | buf[7] as u16;
+            if rcode != 0 || answer_count == 0 {
+                // NXDOMAIN 或没有回答
+                DnsResult {
+                    dns: dns_addr.to_string(),
+                    time_ms: None,
+                }
+            } else {
+                DnsResult {
+                    dns: dns_addr.to_string(),
+                    time_ms: Some(duration),
+                }
+            }
+        }
         _ => DnsResult {
             dns: dns_addr.to_string(),
             time_ms: None,
