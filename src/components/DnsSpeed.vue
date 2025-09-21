@@ -49,7 +49,7 @@ interface DnsResult {
 
 const results = ref<DnsResult[]>([]);
 const loading = ref(false);
-const domain = ref("www.google.com");
+const domain = ref("www.baidu.com");
 const dnsInput = ref("114.114.114.114:53,114.114.115.115:53,223.5.5.5:53,223.6.6.6:53,180.76.76.76:53,119.29.29.29:53");
 
 
